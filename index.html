@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <title>🎮小胡の礼物时间</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-image: url('bg.png');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .card {
+            transition: transform 0.5s, background-color 0.3s;
+        }
+
+        .card:hover {
+            transform: rotateY(180deg);
+            background-color: #d8b4fe;
+        }
+
+        .card.clicked {
+            pointer-events: none;
+            /* 禁止再响应点击 */
+        }
+
+        .card.clicked:hover {
+            background-color: inherit;
+            /* 禁止hover背景变色 */
+        }
+
+        #flipResult {
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="text-center min-h-screen flex flex-col justify-center items-center p-4 bg-pink-50 bg-opacity-60">
+    <h1 class="text-6xl text-pink-400 mb-10">🎂胡添策，26岁生日快乐！🎂</h1>
+    <button class="rounded-sm bg-white mb-5" onclick="document.getElementById('bgm').play()">点我!点我！</button>
+    <audio id="bgm" loop>
+        <source src="song.mp3" type="audio/mpeg">
+    </audio>
+
+
+
+    <div id="game" class="space-y-6 max-w-2xl w-full">
+        <!-- 问答 -->
+        <div id="stage1" class="bg-white/80 p-10 rounded-2xl shadow-xl space-y-6">
+            <h2 class="text-3xl font-bold text-pink-600">🎁小胡の闯关时间</h2>
+            <p id="questionText" class="text-lg font-medium"></p>
+            <div id="options" class="space-y-4"></div>
+            <p id="rewardText" class="text-green-600 font-semibold"></p>
+        </div>
+
+        <!-- 抽奖 -->
+        <div id="stage2" class="bg-white/80 p-10 rounded-2xl shadow-xl space-y-6 hidden">
+            <h2 class="text-3xl font-bold text-purple-600">🎁小胡の抽卡时间</h2>
+            <p class="text-lg">你共获得 <span id="rewardCount"></span> 张卡！</p>
+            <div id="cards" class="grid grid-cols-3 gap-4 justify-center"></div>
+            <p id="flipResult" class="mt-4 font-semibold text-purple-600"></p>
+            <button class="mt-6 bg-purple-600 text-white px-6 py-3 rounded-full text-lg hover:bg-purple-700"
+                onclick="showImageModal()">
+                我想看小猫的手写信
+            </button>
+        </div>
+
+        <!-- 手写信 -->
+        <div id="imageModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center hidden">
+            <div class="bg-white p-6 rounded-lg shadow-xl">
+                <button onclick="closeImageModal()"
+                    class="text-red-500 text-2xl font-bold absolute top-2 right-2">×</button>
+                <img src="letter.png" alt="小猫的手写信" class="w-full max-w-md" />
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            { q: "我更喜欢小猫还是小狗？", options: ["小猫", "小狗"], correct: "小猫" },
+            { q: "我更喜欢吃？", options: ["辣", "甜"], correct: "辣" },
+            { q: "咱俩第一次见面日期？", options: ["2024/03/07", "2024/03/08"], correct: "2024/03/07" },
+            { q: "第一次见面我穿了什么颜色大衣？", options: ["白色", "黑色"], correct: "黑色" },
+            { q: "我早上起得来吗？", options: ["当然起得来", "你在说梦话"], correct: "你在说梦话" },
+            { q: "你想一直跟小猫在一起吗", options: ["想", "一直一直一直在一起！"], correct: "一直一直一直在一起！" }
+        ];
+        let currentQ = 0, cardsEarned = 0;
+
+        function renderQuestion() {
+            const q = questions[currentQ];
+            document.getElementById("questionText").textContent = q.q;
+            const optionsDiv = document.getElementById("options");
+            optionsDiv.innerHTML = "";
+            q.options.forEach(opt => {
+                const btn = document.createElement("button");
+                btn.textContent = opt;
+                btn.className = "bg-pink-400 hover:bg-blue-500 text-white px-6 py-3 text-lg rounded m-4";
+                btn.onclick = () => handleAnswer(opt);
+                optionsDiv.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(choice) {
+            if (choice === questions[currentQ].correct) {
+                cardsEarned++;
+                document.getElementById("rewardText").textContent = `🎉 答对啦！获得 1 张礼物卡！（目前共 ${cardsEarned} 张）`;
+            } else {
+                document.getElementById("rewardText").textContent = `👊 你有一点点笨，这题没有奖励～`;
+            }
+            currentQ++;
+            if (currentQ < questions.length) {
+                setTimeout(() => {
+                    document.getElementById("rewardText").textContent = "";
+                    renderQuestion();
+                }, 1500);
+            } else {
+                setTimeout(() => {
+                    document.getElementById("stage1").classList.add("hidden");
+                    document.getElementById("stage2").classList.remove("hidden");
+                    startCardGame();
+                }, 2000);
+            }
+        }
+
+        // 翻卡
+        function startCardGame() {
+            document.getElementById("rewardCount").textContent = cardsEarned;
+            const cardsDiv = document.getElementById("cards");
+            cardsDiv.innerHTML = "";
+
+            const availableGifts = [
+                "🎁 来自东方的神秘包裹",
+                "🖐️ 小猫的爱心手作",
+                "💆 马杀鸡券 x1",
+                "💌 小猫的手写信",
+                "❤  免死金牌 x1",
+                "🍀 好运符咒"
+            ];
+
+            // 确保每个卡片的结果不重复
+            for (let i = 0; i < cardsEarned; i++) {
+                const btn = document.createElement("button");
+                btn.className = "card bg-purple-200 text-xl p-10 rounded-xl hover:bg-purple-300";  // 原有的hover效果
+                btn.innerHTML = "<img src='back.jpg' alt='🎴' class='w-full h-full object-cover' />";
+
+                // 标记卡片是否已经点击过
+                let clicked = false;
+
+                btn.onclick = () => {
+                    if (!clicked && availableGifts.length > 0) {  // 只有在未点击的情况下且有未用的礼物时
+                        const randomIndex = Math.floor(Math.random() * availableGifts.length);  // 随机生成索引
+                        const gift = availableGifts[randomIndex];  // 获取随机的礼物
+
+                        btn.innerHTML = `<span class='card-face'>${gift}</span>`;  // 显示礼物
+                        btn.disabled = true;  // 禁用按钮，防止重复点击
+                        clicked = true;  // 设置为已点击状态
+                        document.getElementById("flipResult").textContent = gift;  // 显示结果
+
+                        // 从数组中移除已选的礼物，避免重复
+                        availableGifts.splice(randomIndex, 1);
+
+                        // 禁用hover效果，确保卡片翻过后不会再翻转
+                        btn.classList.add("clicked");  // 添加 clicked 类
+                    }
+                };
+
+                cardsDiv.appendChild(btn);
+            }
+        }
+
+        renderQuestion();
+
+        // 显示弹窗
+        function showImageModal() {
+            document.getElementById("imageModal").classList.remove("hidden");
+        }
+
+        // 关闭弹窗
+        function closeImageModal() {
+            document.getElementById("imageModal").classList.add("hidden");
+        }
+    </script>
+
+</body>
+
+</html>
